@@ -1,0 +1,13 @@
+[Unit]
+Description=Broadlink
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/broadlink-thermostat
+ExecStart=/usr/bin/python3 /root/broadlink-thermostat/broadlink-thermostat.py
+Restart=always
+RestartSec=10s
+[Install]
+WantedBy=multi-user.target
+
