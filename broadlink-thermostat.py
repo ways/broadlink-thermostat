@@ -24,7 +24,9 @@ class Config(object):
         self.config['keyfile']      = None
         self.config['tls_insecure'] = False
         self.config['tls']          = False
-        execfile(filename, self.config)
+        with open(filename) as f:
+            code = compile(f.read(), filename, 'exec')
+            exec(code, self.config)
 
         if HAVE_TLS == False:
             logging.error("TLS parameters set but no TLS available (SSL)")
@@ -42,7 +44,7 @@ class Config(object):
                     self.config['tls_version'] = ssl.PROTOCOL_TLSv1_2
                 else:
                     logging.error("TLS version 1.2 not available but 'tlsv1.2' is set.")
-            	    sys.exit(2)
+                    sys.exit(2)
             if self.config.get('tls_version') == 'sslv3':
                 self.config['tls_version'] = ssl.PROTOCOL_SSLv3
 
@@ -82,7 +84,7 @@ class ReadDevice(Process):
         try:
             if self.device.auth():
                 self.run = True
-                print self.device.type
+                print (self.device.type)
                 timezone = pytz.timezone(self.conf.get('time_zone','Europe/Berlin'))
                 now=datetime.datetime.now(timezone)
                 # set device time
@@ -114,7 +116,7 @@ class ReadDevice(Process):
                                 try:
                                     schedule=json.loads(opts)
                                     self.device.set_schedule(schedule[0],schedule[1])
-                                except Exception, e:
+                                except Exception as e:
                                     pass
                         else:
                             if result == 'STOP':
@@ -127,7 +129,7 @@ class ReadDevice(Process):
                         except socket.timeout:
                             mqttc.loop_stop()
                             return
-                        except Exception, e:
+                        except Exception as e:
                             unhandeledException(e)
                             mqttc.loop_stop()
                             return
@@ -137,10 +139,10 @@ class ReadDevice(Process):
                                 pass
                             else:
                                 if key == 'room_temp':
-                                    print "  {} {} {}".format(self.divicemac, key, data[key])
+                                    print ("  {} {} {}".format(self.divicemac, key, data[key]))
                                 mqttc.publish('%s/%s/%s'%(self.conf.get('mqtt_topic_prefix', '/broadlink'), self.divicemac, key), data[key], qos=self.conf.get('mqtt_qos', 0), retain=self.conf.get('mqtt_retain', False))
                         mqttc.publish('%s/%s/%s'%(self.conf.get('mqtt_topic_prefix', '/broadlink'), self.divicemac, 'schedule'), json.dumps([data['weekday'],data['weekend']]), qos=self.conf.get('mqtt_qos', 0), retain=self.conf.get('mqtt_retain', False))
-                except Exception, e:
+                except Exception as e:
                     unhandeledException(e)
                     mqttc.loop_stop()
                     return
@@ -151,7 +153,7 @@ class ReadDevice(Process):
             mqttc.loop_stop()
             return
 
-        except Exception, e:
+        except Exception as e:
             unhandeledException(e)
             mqttc.loop_stop()
             return
@@ -159,8 +161,8 @@ class ReadDevice(Process):
 def main():
     try:
         conf = Config()
-    except Exception, e:
-        print "Cannot load configuration from file %s: %s" % (CONFIG, str(e))
+    except Exception as e:
+        print ("Cannot load configuration from file %s: %s" % (CONFIG, str(e)))
         sys.exit(2)
 
     jobs = []
@@ -175,10 +177,10 @@ def main():
             try:
                 for (ID, pipe) in pipes:
                     if ID==devicemac:
-                        print 'send to pipe %s' % ID
+                        print ('send to pipe %s' % ID)
                         pipe.send((command, msg.payload))
             except:
-                print "Unexpected error:", sys.exc_info()[0]
+                print ("Unexpected error:", sys.exc_info()[0])
                 raise
 
     def on_disconnect(client, empty, rc):
@@ -233,7 +235,7 @@ def main():
                         del jobs[idx]
                     except:
                         pass
-            print "broadlink discover"
+            print ("broadlink discover")
             devices = broadlink.discover(timeout=conf.get('lookup_timeout', 5))
             for device in devices:
                 divicemac = ''.join(format(x, '02x') for x in device.mac)
@@ -241,7 +243,7 @@ def main():
                     transportPipe, MasterPipe = Pipe()
                     pipes.append((divicemac, MasterPipe))
 
-                    print "found: {} {}".format(device.host[0], ''.join(format(x, '02x') for x in device.mac))
+                    print ("found: {} {}".format(device.host[0], ''.join(format(x, '02x') for x in device.mac)))
                     p = ReadDevice(transportPipe, divicemac, device, conf)
                     jobs.append(p)
                     p.start()
@@ -249,12 +251,12 @@ def main():
                     time.sleep(2)
             mqttc.user_data_set(pipes)
             mqttc.loop_stop()
-            print "Reconnect"
+            print ("Reconnect")
             mqttc.loop_start()
             time.sleep(conf.get('rediscover_time', 600))
         except KeyboardInterrupt:
             run = False
-        except Exception, e:
+        except Exception as e:
             run = False
             unhandeledException(e)
         except SignalException_SIGKILL:
