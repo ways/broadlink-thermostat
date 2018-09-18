@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*
 from multiprocessing import Process, Lock, Pipe
 import multiprocessing, argparse, time, datetime, sys, os, signal, traceback, socket, sched, atexit
