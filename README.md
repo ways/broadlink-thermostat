@@ -1,3 +1,8 @@
+# Broadlink thermostat with mqtt
+
+* Syntax converted to Python3, but unable to communicate with thermostat yet.
+
+
 # broadlink thermostat with mqtt and openhab
 
 default.items
